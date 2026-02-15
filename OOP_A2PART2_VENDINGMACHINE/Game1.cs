@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.VisualBasic;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -16,13 +18,27 @@ namespace OOP_A2PART2_VENDINGMACHINE
         private Texture2D vmSprite;
         private Vector2 vmPosition;
         private int vmScale;
-
-        //hitbox
+        //machine hitbox
         private Rectangle hitbox;
         //whether the mouse is currently over the vending machine
-        private bool isHovering;
+        private bool vmHovering;
         //1x1 texture used to draw hitboxes/debug rectangles
         private Texture2D pixel;
+
+        //buttons
+        private Texture2D bGreenUp;
+        private Texture2D bGreenDown;
+        private bool bIsPressed;
+        //button hovering
+        private bool bHovering;
+        //button hitbox
+        private Rectangle bHitbox;
+        //button scale
+        private int bScale;
+        //button position
+        private Vector2 bPosition;
+
+      
 
         public Game1()
         {
@@ -33,26 +49,13 @@ namespace OOP_A2PART2_VENDINGMACHINE
 
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
             //screen size
             _graphics.PreferredBackBufferWidth = 1600;
             _graphics.PreferredBackBufferHeight = 800;
             _graphics.ApplyChanges();
 
-            //background
-            bg = Content.Load<Texture2D>("CityBG");
-
-            //sprite
-            vmSprite = Content.Load<Texture2D>("VendingMachine");
-
-            //sprite position
             vmScale = 5;
-            int vmX = (GraphicsDevice.Viewport.Width - vmSprite.Width*vmScale) / 2;
-            int vmY = (GraphicsDevice.Viewport.Height - vmSprite.Height*vmScale) / 2;
-            vmPosition = new Vector2(vmX, vmY);
-
-            //hitbox
-            hitbox = new Rectangle(vmX, vmY, vmSprite.Width * vmScale, vmSprite.Height * vmScale);
+            bScale = 5;
 
             base.Initialize();
         }
@@ -65,7 +68,15 @@ namespace OOP_A2PART2_VENDINGMACHINE
             pixel = new Texture2D(GraphicsDevice, 1, 1);
             pixel.SetData(new[] { Color.White });
 
-            // TODO: use this.Content to load your game content here
+            //background
+            bg = Content.Load<Texture2D>("CityBG");
+
+            //sprite
+            vmSprite = Content.Load<Texture2D>("VendingMachine");
+
+            //button sprite
+            bGreenUp = Content.Load<Texture2D>("buttonFrames/buttonGreenUp");
+            bGreenDown = Content.Load<Texture2D>("buttonFrames/buttonGreenDown");
         }
 
         protected override void Update(GameTime gameTime)
@@ -73,10 +84,37 @@ namespace OOP_A2PART2_VENDINGMACHINE
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
-            // check mouse hover over vending machine
+            //mouse
             var mouse = Mouse.GetState();
-            isHovering = hitbox.Contains(mouse.X, mouse.Y);
+
+            //machine position
+            int vmX = (GraphicsDevice.Viewport.Width - vmSprite.Width * vmScale) / 2;
+            int vmY = (GraphicsDevice.Viewport.Height - vmSprite.Height * vmScale) / 2;
+            vmPosition = new Vector2(vmX, vmY);
+
+            //machine hitbox
+            hitbox = new Rectangle(vmX, vmY, vmSprite.Width * vmScale, vmSprite.Height * vmScale);
+            vmHovering = hitbox.Contains(mouse.X, mouse.Y);
+
+            //button position
+            int bX = (GraphicsDevice.Viewport.Width - bGreenUp.Width * bScale) / 2 - 100;
+            int bY = GraphicsDevice.Viewport.Height - bGreenUp.Height * bScale - 50;
+            bPosition = new Vector2(bX, bY);
+
+            //button hitbox
+            bHitbox = new Rectangle((int)bPosition.X, (int)bPosition.Y, bGreenUp.Width * bScale, bGreenUp.Height * bScale);
+            bHovering = bHitbox.Contains(mouse.X, mouse.Y);
+
+            if (bHovering && mouse.LeftButton == ButtonState.Pressed)
+            {
+                bIsPressed = true;
+            }
+            if (mouse.LeftButton == ButtonState.Released)
+            {
+                bIsPressed = false;
+            }
+
+
 
             base.Update(gameTime);
         }
@@ -85,7 +123,6 @@ namespace OOP_A2PART2_VENDINGMACHINE
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
             _spriteBatch.Begin(SpriteSortMode.Deferred, null, SamplerState.PointClamp);
 
             //background
@@ -95,31 +132,37 @@ namespace OOP_A2PART2_VENDINGMACHINE
             _spriteBatch.Draw(vmSprite, vmPosition, null, Color.White, 0f, Vector2.Zero, vmScale, SpriteEffects.None, 0f);
 
             //hitbox
-            // show hitbox outline when hovering (alpha > 0) otherwise hide
-            DrawCollision(hitbox.Width, hitbox.Height, 2, Color.Red, isHovering ? 0.25f : 0f);
+            //show hitbox outline when hovering (debug)
+            DrawCollision(hitbox, hitbox.Width, hitbox.Height, 2, Color.Red, vmHovering ? 0.25f : 0f);
+
+            //draw button
+            if (bIsPressed) _spriteBatch.Draw(bGreenDown, bPosition, null, Color.White, 0f, Vector2.Zero, bScale, SpriteEffects.None, 0f);
+            else _spriteBatch.Draw(bGreenUp, bPosition, null, Color.White, 0f, Vector2.Zero, bScale, SpriteEffects.None, 0f);
+
+            //show button hitbox when hovering (debug)
+            DrawCollision(bHitbox, bHitbox.Width, bHitbox.Height, 2, Color.Green, bHovering ? 0.25f : 0f);
 
             _spriteBatch.End();
             base.Draw(gameTime);
         }
 
-        private void DrawCollision(int width, int height, int thickness, Color color, float alpha)
+        private void DrawCollision(Rectangle hitbox, int width, int height, int thickness, Color color, float alpha)
         {
             //hitbox
-            // draw a semi-transparent fill so the hitbox area is visible
+            //draw a semi-transparent fill so the hitbox area is visible
             _spriteBatch.Draw(pixel, hitbox, Color.Red * alpha);
 
             if (alpha != 0f)
             {
-                // top
+                //top
                 _spriteBatch.Draw(pixel, new Rectangle(hitbox.Left, hitbox.Top, hitbox.Width, thickness), Color.Red);
-                // bottom
+                //bottom
                 _spriteBatch.Draw(pixel, new Rectangle(hitbox.Left, hitbox.Bottom - thickness, hitbox.Width, thickness), Color.Red);
-                // left
+                //left
                 _spriteBatch.Draw(pixel, new Rectangle(hitbox.Left, hitbox.Top, thickness, hitbox.Height), Color.Red);
-                // right
+                //right
                 _spriteBatch.Draw(pixel, new Rectangle(hitbox.Right - thickness, hitbox.Top, thickness, hitbox.Height), Color.Red);
             }
-        }
-
+        }            
     }
 }
