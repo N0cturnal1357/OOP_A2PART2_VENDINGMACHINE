@@ -49,6 +49,13 @@
 /processorParam:TextureFormat=Color
 /build:CityBG.png
 
+#begin Font.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:Font.spritefont
+
 #begin VendingMachine.png
 /importer:TextureImporter
 /processor:TextureProcessor

@@ -1,8 +1,10 @@
-﻿using System;
-using Microsoft.VisualBasic;
+﻿using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Reflection;
+using System.Text;
 
 namespace OOP_A2PART2_VENDINGMACHINE
 {
@@ -11,8 +13,14 @@ namespace OOP_A2PART2_VENDINGMACHINE
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
+        //font
+        private SpriteFont font;
+
         //background
         private Texture2D bg;
+
+        //vending machine object
+        VendingMachine vm;
 
         //sprite
         private Texture2D vmSprite;
@@ -25,7 +33,8 @@ namespace OOP_A2PART2_VENDINGMACHINE
         //1x1 texture used to draw hitboxes/debug rectangles
         private Texture2D pixel;
 
-        //buttons
+        //buttons===============================================================
+        //pay button
         private Texture2D bGreenUp;
         private Texture2D bGreenDown;
         private bool bIsPressed;
@@ -37,8 +46,15 @@ namespace OOP_A2PART2_VENDINGMACHINE
         private int bScale;
         //button position
         private Vector2 bPosition;
+        //button text
+        private string bGreenText = "PAY";
+        private Vector2 bGreenTextPos;
 
-      
+        //kick button
+
+
+
+
 
         public Game1()
         {
@@ -56,6 +72,11 @@ namespace OOP_A2PART2_VENDINGMACHINE
 
             vmScale = 5;
             bScale = 5;
+
+            font = Content.Load<SpriteFont>("Font");
+
+            vm = new VendingMachine();
+            vm.CreateVendingMachine();
 
             base.Initialize();
         }
@@ -100,22 +121,38 @@ namespace OOP_A2PART2_VENDINGMACHINE
             int bX = (GraphicsDevice.Viewport.Width - bGreenUp.Width * bScale) / 2 - 100;
             int bY = GraphicsDevice.Viewport.Height - bGreenUp.Height * bScale - 50;
             bPosition = new Vector2(bX, bY);
+            
+            
 
             //button hitbox
             bHitbox = new Rectangle((int)bPosition.X, (int)bPosition.Y, bGreenUp.Width * bScale, bGreenUp.Height * bScale);
             bHovering = bHitbox.Contains(mouse.X, mouse.Y);
 
+            //BUTTON FUNCTIONALITY HERE
             if (bHovering && mouse.LeftButton == ButtonState.Pressed)
             {
                 bIsPressed = true;
+                bGreenTextPos = new Vector2(bPosition.X + (bGreenUp.Width * bScale) / 2 - font.MeasureString(bGreenText).X / 2, bPosition.Y + 32);
             }
             if (mouse.LeftButton == ButtonState.Released)
             {
+                // If the button was pressed (press started inside the button),
+                // trigger the vending machine give-money animation.
+                if (bIsPressed)
+                {
+                    vm.StartGive(new Vector2(vmPosition.X + vmSprite.Width * vmScale + 10, vmPosition.Y), Color.LimeGreen);
+                }
+
                 bIsPressed = false;
+                bGreenTextPos = new Vector2(bPosition.X + (bGreenUp.Width * bScale) / 2 - font.MeasureString(bGreenText).X / 2, bPosition.Y + 15);
             }
 
+            // update vending machine animations
+            vm.UpdateGive();
 
 
+
+            // stats drawing handled in Draw()
             base.Update(gameTime);
         }
 
@@ -138,9 +175,20 @@ namespace OOP_A2PART2_VENDINGMACHINE
             //draw button
             if (bIsPressed) _spriteBatch.Draw(bGreenDown, bPosition, null, Color.White, 0f, Vector2.Zero, bScale, SpriteEffects.None, 0f);
             else _spriteBatch.Draw(bGreenUp, bPosition, null, Color.White, 0f, Vector2.Zero, bScale, SpriteEffects.None, 0f);
+            //draw button text
+            _spriteBatch.DrawString(font, bGreenText, bGreenTextPos, Color.DarkGreen);
 
             //show button hitbox when hovering (debug)
             DrawCollision(bHitbox, bHitbox.Width, bHitbox.Height, 2, Color.Green, bHovering ? 0.25f : 0f);
+
+
+            // Draw give-money text if the vending machine is animating it.
+            vm.GiveMoney(_spriteBatch, font, new Vector2(vmPosition.X - 20, vmPosition.Y), Color.Green);
+
+            // Draw vending machine stats
+            string stats = vm.GetStats();
+            _spriteBatch.DrawString(font, stats, new Vector2(10, 10), Color.White);
+
 
             _spriteBatch.End();
             base.Draw(gameTime);
@@ -163,6 +211,6 @@ namespace OOP_A2PART2_VENDINGMACHINE
                 //right
                 _spriteBatch.Draw(pixel, new Rectangle(hitbox.Right - thickness, hitbox.Top, thickness, hitbox.Height), Color.Red);
             }
-        }            
+        }
     }
 }
