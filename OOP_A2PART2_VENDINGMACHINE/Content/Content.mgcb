@@ -37,6 +37,30 @@
 /processorParam:TextureFormat=Color
 /build:buttonFrames/buttonGreenUp.png
 
+#begin buttonFrames/buttonRedDown.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:buttonFrames/buttonRedDown.png
+
+#begin buttonFrames/buttonRedUp.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:buttonFrames/buttonRedUp.png
+
 #begin CityBG.png
 /importer:TextureImporter
 /processor:TextureProcessor
