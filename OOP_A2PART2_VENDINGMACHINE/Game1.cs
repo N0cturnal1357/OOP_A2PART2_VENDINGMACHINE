@@ -1,10 +1,6 @@
-﻿using Microsoft.VisualBasic;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System;
-using System.Reflection;
-using System.Text;
 
 namespace OOP_A2PART2_VENDINGMACHINE
 {
@@ -25,21 +21,18 @@ namespace OOP_A2PART2_VENDINGMACHINE
         //sprite
         private Texture2D vmSprite;
 
-        //1x1 texture used to draw hitboxes/debug rectangles
-        private Texture2D pixel;
-
         //buttons===============================================================
+        //hitboxes
         private Rectangle bGreenHitbox;
         private Rectangle bRedHitbox;
         private bool isHoveringGreen;
-        private bool isHoveringred;
+        private bool isHoveringRed;
         private int buttonScale;
 
         //pay button
         private Texture2D bGreenUp;
         private Texture2D bGreenDown;
         private Texture2D bGreenCurrentSprite;
-        private Vector2 bGreenPosition;
         private Vector2 greenTextPosition;
 
         //kick button
@@ -62,8 +55,6 @@ namespace OOP_A2PART2_VENDINGMACHINE
             _graphics.PreferredBackBufferHeight = 800;
             _graphics.ApplyChanges();
 
-            font = Content.Load<SpriteFont>("Font");
-
             vm = new VendingMachine();
             vm.CreateVendingMachine();
 
@@ -76,9 +67,8 @@ namespace OOP_A2PART2_VENDINGMACHINE
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // create a 1x1 white texture for drawing rectangles / hitboxes
-            pixel = new Texture2D(GraphicsDevice, 1, 1);
-            pixel.SetData(new[] { Color.White });
+            //font
+            font = Content.Load<SpriteFont>("Font");
 
             //background
             bg = Content.Load<Texture2D>("CityBG");
@@ -91,8 +81,13 @@ namespace OOP_A2PART2_VENDINGMACHINE
             bGreenDown = Content.Load<Texture2D>("buttonFrames/buttonGreenDown");
             bRedUp = Content.Load<Texture2D>("buttonFrames/buttonRedUp");
             bRedDown = Content.Load<Texture2D>("buttonFrames/buttonRedDown");
-        }
 
+            bGreenCurrentSprite = bGreenUp;
+            bRedCurrentSprite = bRedUp;
+            greenTextPosition.Y = GraphicsDevice.Viewport.Height - (bGreenUp.Height * buttonScale) - 25;
+            redTextPosition.Y = GraphicsDevice.Viewport.Height - (bRedUp.Height * buttonScale) - 25;
+
+        }
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -124,14 +119,14 @@ namespace OOP_A2PART2_VENDINGMACHINE
             );
 
             isHoveringGreen = bGreenHitbox.Contains(mouse.Position);
-            isHoveringred = bRedHitbox.Contains(mouse.Position);
+            isHoveringRed = bRedHitbox.Contains(mouse.Position);
             if (isHoveringGreen && mouse.LeftButton == ButtonState.Pressed)
             {
                 bGreenCurrentSprite = bGreenDown;
                 vm.StartGive(Color.Green);
                 greenTextPosition.Y = GraphicsDevice.Viewport.Height - (bGreenUp.Height * buttonScale) - 15;
             }
-            if (isHoveringred && mouse.LeftButton == ButtonState.Pressed)
+            if (isHoveringRed && mouse.LeftButton == ButtonState.Pressed)
             {
                 bRedCurrentSprite = bRedDown;
                 vm.StartKick(Color.Red);
@@ -194,7 +189,7 @@ namespace OOP_A2PART2_VENDINGMACHINE
                 new Vector2
                 (
                    GraphicsDevice.Viewport.Width / 2 + 150,
-                    GraphicsDevice.Viewport.Height - (bRedUp.Height * buttonScale) - 50
+                   GraphicsDevice.Viewport.Height - (bRedUp.Height * buttonScale) - 50
                 ),
                 null,
                 Color.White,
@@ -207,8 +202,7 @@ namespace OOP_A2PART2_VENDINGMACHINE
             _spriteBatch.DrawString(font, "KICK", redTextPosition, Color.DarkRed);
 
             //sprite
-            //_spriteBatch.Draw(vmSprite, vmPosition, null, Color.White, 0f, Vector2.Zero, vmScale, SpriteEffects.None, 0f);
-            vm.DrawMachine(_spriteBatch);
+            vm.DrawMachine(_spriteBatch, font);
 
             // Draw give-money text if the vending machine is animating it.
             vm.GiveMoney(_spriteBatch, font, Color.Green);
@@ -222,25 +216,6 @@ namespace OOP_A2PART2_VENDINGMACHINE
 
             _spriteBatch.End();
             base.Draw(gameTime);
-        }
-
-        private void DrawCollision(Rectangle hitbox, int width, int height, int thickness, Color color, float alpha)
-        {
-            //hitbox
-            //draw a semi-transparent fill so the hitbox area is visible
-            _spriteBatch.Draw(pixel, hitbox, Color.Red * alpha);
-
-            if (alpha != 0f)
-            {
-                //top
-                _spriteBatch.Draw(pixel, new Rectangle(hitbox.Left, hitbox.Top, hitbox.Width, thickness), Color.Red);
-                //bottom
-                _spriteBatch.Draw(pixel, new Rectangle(hitbox.Left, hitbox.Bottom - thickness, hitbox.Width, thickness), Color.Red);
-                //left
-                _spriteBatch.Draw(pixel, new Rectangle(hitbox.Left, hitbox.Top, thickness, hitbox.Height), Color.Red);
-                //right
-                _spriteBatch.Draw(pixel, new Rectangle(hitbox.Right - thickness, hitbox.Top, thickness, hitbox.Height), Color.Red);
-            }
         }
     }
 }

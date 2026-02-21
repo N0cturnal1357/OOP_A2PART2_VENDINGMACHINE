@@ -2,8 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace OOP_A2PART2_VENDINGMACHINE
 {
@@ -44,7 +42,7 @@ namespace OOP_A2PART2_VENDINGMACHINE
         private int vmScale;
 
         //items gained
-        List<string> itemsGained = new List<string>();
+        private List<string> itemsGained = new List<string>();
 
         public void CreateVendingMachine()
         {
@@ -55,7 +53,7 @@ namespace OOP_A2PART2_VENDINGMACHINE
             SetPrice();
 
             min = 1;
-            max = 12 * health;
+            //SetChance();
         }
 
         public void SetPosition(int x, int y, Texture2D sprite)
@@ -68,9 +66,16 @@ namespace OOP_A2PART2_VENDINGMACHINE
             position = new Vector2(vmX, vmY);
         }
 
-        public void DrawMachine(SpriteBatch spriteBatch)
+        public void DrawMachine(SpriteBatch spriteBatch, SpriteFont font)
         {
-            spriteBatch.Draw(vmSprite, position, null, Color.White, 0f, Vector2.Zero, vmScale, SpriteEffects.None, 0f);
+            Color color = Color.White;
+            if (health <= 0)
+            {
+                color = Color.DarkGray;
+                spriteBatch.DrawString(font, "You Broke It!", new Vector2(position.X, position.Y - 40), Color.Red);
+            }
+            else color = Color.White;
+            spriteBatch.Draw(vmSprite, position, null, color, 0f, Vector2.Zero, vmScale, SpriteEffects.None, 0f);
         }
         public string GetStats()
         {
@@ -82,26 +87,22 @@ namespace OOP_A2PART2_VENDINGMACHINE
                 $"Total Money Given: {totalMoneyGiven}\n" +
                 $"Contains Item: {containsItem}\n" +
                 $"Item: {item}\n" +
-                $"Chance to Get Item: {chance} / {max}\n" +
+                $"Chance to Get Item: {min} / {max}\n" +
+                $"Num Drawn if = max give item: {chance}\n" +
                 $"Items Gained: {string.Join(", ", itemsGained)}"
                 ;
 
             return stats;
         }
 
-        public void SetPrice(int min = 1, int max = 6) //1-5 default range
+        private void SetPrice(int min = 1, int max = 6) //1-5 default range
         {
             price = new Random().Next(min, max);
         }
 
-        public int GetPrice()
+        private void SetItem()
         {
-            return price;
-        }
-
-        public void SetItem()
-        {
-            items = new string[] { "Chips", "Soda", "Candy" };
+            items = new string[] { "Chips", "Soda", "Candy", "Juice", "Cookies" };
             int random = new Random().Next(0, items.Length);
 
             int choose = new Random().Next(0, 1);
@@ -112,10 +113,10 @@ namespace OOP_A2PART2_VENDINGMACHINE
             else item = "Nothing";
         }
        
-        public void GiveItem()
+        private void GiveItem()
         {
             if (!containsItem) return;
-            itemsGained.Add(item);
+            itemsGained.Add("\n" + item);
             SetItem();
             SetPrice();
         }
@@ -142,17 +143,20 @@ namespace OOP_A2PART2_VENDINGMACHINE
         public void StartKick(Color color)
         {
             if (isKicking) return; // already running
+            if (health > 0)
+            {
+                health -= damage;
+                SetChance();
+                SetItem();
+                kickText = $"- {damage}";
+                kickPosition = new Vector2(position.X + vmSprite.Width * vmScale + 30, position.Y);
+                kickColor = color;
+                kickAlpha = 1f;
+                isKicking = true;
 
-            health -= damage;
-            SetChance();
-            kickText = $"- {damage}";
-            kickPosition = new Vector2(position.X + vmSprite.Width*vmScale + 30, position.Y);
-            kickColor = color;
-            kickAlpha = 1f;
-            isKicking = true;
-
-            hits++;
-            damage = new Random().Next(1, 10);
+                hits++;
+                damage = new Random().Next(1, 10);
+            }
         }
 
         //GIVE MONEY STUFF================================================================
@@ -174,26 +178,29 @@ namespace OOP_A2PART2_VENDINGMACHINE
         {
             if (isGiving) return; // already running
 
-            totalMoneyGiven += price;
-            giveText = $"+ {price}";
-            givePosition = new Vector2(position.X - 30, position.Y);
-            giveColor = color;
-            giveAlpha = 1f;
-            isGiving = true;
-
-            //change to give item, if there is one
-            if (containsItem)
+            if (health > 0)
             {
-                int randNum = new Random().Next(min, max + 1);
-                if (randNum <= chance)
+                totalMoneyGiven += price;
+                giveText = $"+ {price}";
+                givePosition = new Vector2(position.X - 60, position.Y); //text pos
+                giveColor = color;
+                giveAlpha = 1f;
+                isGiving = true;
+
+                //change to give item, if there is one
+                if (containsItem)
                 {
-                    GiveItem();
+                    SetChance();
+                    if (chance == max)
+                    {
+                        GiveItem();
+                    }
+                    else return;
                 }
-                else return;
             }
         }
 
-        //Update the give-money animation call each Update() frame from Game1
+        //check if animation should be running, and run if true (put in update)
         public void UpdateGive()
         {
             if (!isGiving) return;
@@ -211,9 +218,19 @@ namespace OOP_A2PART2_VENDINGMACHINE
         //CHANCE TO GET ITEM STUFF================================================================
         private void SetChance()
         {
-            min = 1;
-            max = 12 * health; //higher health = lower chance to get item
-            chance = new Random().Next(min, max + 1);
+            max = (3 * health) +1; //higher health = lower chance to get item
+
+            if (health > 0)
+            {
+                chance = new Random().Next(min, max +1);
+            }
+            else
+            {
+                chance = 0;
+                health = 0;
+                min = 0;
+                max = 1;
+            }
         }
     }
 }
